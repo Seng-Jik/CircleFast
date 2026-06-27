@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+local.properties
+*.swp
+*.swo
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+gen/
+out/
+
+# Kotlin
+*.class
+
+# Environment
+.cxx/
+*.log
+*.hprof
+
+# Git
+# Keep the wrapper
