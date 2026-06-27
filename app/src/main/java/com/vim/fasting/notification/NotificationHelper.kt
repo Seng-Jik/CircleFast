@@ -14,8 +14,9 @@ import com.vim.fasting.MainActivity
 import com.vim.fasting.R
 
 /**
- * Manages notification channels and sends notifications with vibration.
- * Uses classic NotificationCompat for broad compatibility.
+ * Sends notification only on phase transitions (fasting started, fasting ended, eating ended).
+ * No ongoing/progress notifications. New notification replaces the previous one (same ID).
+ * Tapping the notification opens the app — no side effects.
  */
 class NotificationHelper(private val context: Context) {
 
@@ -40,48 +41,11 @@ class NotificationHelper(private val context: Context) {
     }
 
     /**
-     * Show a notification with vibration and a progress bar for the current timer state.
-     *
-     * @param title       Notification title
-     * @param body        Notification body text
-     * @param progressMax Max progress value (e.g. total duration in minutes)
-     * @param progress    Current progress value
-     * @param ongoing     Whether it's an ongoing (non-dismissible) notification
+     * Show a one-shot notification for phase transitions.
+     * Always uses the same notification ID so new messages overwrite old ones.
+     * Tapping opens the app.
      */
-    fun showProgressNotification(
-        title: String,
-        body: String,
-        progressMax: Int,
-        progress: Int,
-        ongoing: Boolean = true
-    ) {
-        val tapIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val tapPendingIntent = PendingIntent.getActivity(
-            context, 0, tapIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setOngoing(ongoing)
-            .setAutoCancel(false)
-            .setContentIntent(tapPendingIntent)
-            .setProgress(progressMax, progress, false)
-            .setOnlyAlertOnce(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build()
-
-        notificationManager.notify(NOTIFICATION_ID, notification)
-    }
-
-    /**
-     * Show a one-shot notification with vibration (for phase transitions).
-     */
-    fun showAlertNotification(title: String, body: String) {
+    fun showPhaseChangeNotification(title: String, body: String) {
         vibrate()
 
         val tapIntent = Intent(context, MainActivity::class.java).apply {
@@ -102,14 +66,14 @@ class NotificationHelper(private val context: Context) {
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
-        notificationManager.notify(NOTIFICATION_ID_ALERT, notification)
+        // Same NOTIFICATION_ID every time → new notifications overwrite old ones
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     /**
-     * Cancel the ongoing progress notification.
-     * Leaves alert notifications untouched so the user sees the transition notification.
+     * Cancel any notification shown (e.g. when user stops fasting).
      */
-    fun cancelProgressNotification() {
+    fun cancelNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
     }
 
@@ -121,13 +85,12 @@ class NotificationHelper(private val context: Context) {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
-        val effect = VibrationEffect.createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE)
+        val effect = VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE)
         vibrator.vibrate(effect)
     }
 
     companion object {
         private const val CHANNEL_ID = "circlefast_fasting"
         private const val NOTIFICATION_ID = 100
-        private const val NOTIFICATION_ID_ALERT = 101
     }
 }

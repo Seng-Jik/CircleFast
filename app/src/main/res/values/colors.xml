@@ -8,4 +8,11 @@
     <color name="text_primary">#FFE0E0E0</color>
     <color name="text_secondary">#FF888888</color>
     <color name="arc_track">#331A1A1A</color>
+
+    <!-- CircleFast icon colors -->
+    <color name="icon_accent">#FFFF5722</color>
+    <color name="icon_track">#33FFFFFF</color>
+    <color name="icon_dot">#FFFF5722</color>
+    <color name="icon_text">#FFFFFFFF</color>
+    <color name="icon_black">#FF000000</color>
 </resources>

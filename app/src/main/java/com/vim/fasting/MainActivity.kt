@@ -108,16 +108,15 @@ private fun CircleFastApp(
                                 state = newState
                                 preferences.saveState(newState)
                                 timer.startFasting()
-                                notifier.showProgressNotification(
-                                    "断食进行中 🟢",
-                                    "16小时后进食窗口开启",
-                                    960, 0
+                                notifier.showPhaseChangeNotification(
+                                    "🔄 断食开始",
+                                    "16小时断食计时已启动。身体即将进入代谢切换模式。"
                                 )
                             }
 
                             FastingPhase.FASTING, FastingPhase.EATING -> {
                                 timer.cancelAll()
-                                notifier.cancelProgressNotification()
+                                notifier.cancelNotification()
                                 preferences.clearState()
                                 state = FastingState(FastingPhase.IDLE, 0L)
                                 Toast.makeText(ctx, "断食已手动结束", Toast.LENGTH_SHORT).show()

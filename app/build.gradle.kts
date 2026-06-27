@@ -18,10 +18,20 @@ android {
         vectorDrawables.useSupportLibrary = false
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../circlefast-release-key.jks")
+            storePassword = "circlefast"
+            keyAlias = "circlefast"
+            keyPassword = "circlefast"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

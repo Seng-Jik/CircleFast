@@ -7,6 +7,8 @@ import com.vim.fasting.data.FastingPhase
 import com.vim.fasting.data.FastingPreferences
 import com.vim.fasting.data.FastingState
 import com.vim.fasting.data.FastingTimer
+import com.vim.fasting.data.FactPhase
+import com.vim.fasting.data.FastingFact
 import com.vim.fasting.notification.NotificationHelper
 
 /**
@@ -33,10 +35,11 @@ class FastingAlarmReceiver : BroadcastReceiver() {
                 // Schedule alarm for eating window end
                 timer.startEating()
 
-                // Show alert notification
-                notifier.showAlertNotification(
-                    context.getString(com.vim.fasting.R.string.fasting_ended),
-                    "进食窗口已开启（8小时）"
+                // Show alert notification with science fact
+                val fact = FastingFact.forElapsedMinutes(FastingState.FAST_DURATION_MS / 60000, FactPhase.FASTING)
+                notifier.showPhaseChangeNotification(
+                    "${fact.emoji} ${context.getString(com.vim.fasting.R.string.fasting_ended)}",
+                    fact.body
                 )
             }
 
@@ -44,9 +47,10 @@ class FastingAlarmReceiver : BroadcastReceiver() {
                 // 8h eating window finished → back to idle or auto-start new fast
                 prefs.clearState()
 
-                notifier.showAlertNotification(
-                    context.getString(com.vim.fasting.R.string.eating_ended),
-                    "进食窗口已关闭，新断食周期可开始"
+                val eatingFact = FastingFact.forElapsedMinutes(FastingState.EAT_DURATION_MS / 60000, FactPhase.EATING)
+                notifier.showPhaseChangeNotification(
+                    "${eatingFact.emoji} ${context.getString(com.vim.fasting.R.string.eating_ended)}",
+                    eatingFact.body
                 )
             }
         }

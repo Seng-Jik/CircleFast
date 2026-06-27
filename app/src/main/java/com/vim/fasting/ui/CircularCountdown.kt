@@ -17,8 +17,8 @@ import kotlin.math.sin
  * Colors matching the app's AMOLED dark theme.
  */
 private val ArcTrack = Color(0x331A1A1A)      // Very dark grey track
-private val FastingArc = Color(0xFF4CAF50)      // Green for fasting
-private val EatingArc = Color(0xFFFF9800)        // Orange for eating
+private val FastingArc = Color(0xFFFF5722)      // Orange-Red for fasting
+private val EatingArc = Color(0xFF4CAF50)        // Green for eating
 private val TickMark = Color(0x44FFFFFF)         // Subtle white tick marks
 private val CenterDot = Color(0x55FFFFFF)        // Dim center indicator
 

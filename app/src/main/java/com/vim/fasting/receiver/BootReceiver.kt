@@ -40,8 +40,8 @@ class BootReceiver : BroadcastReceiver() {
                     val now = System.currentTimeMillis()
                     prefs.saveState(FastingState(FastingPhase.EATING, now))
                     timer.startEating()
-                    notifier.showAlertNotification(
-                        "断食自动完成",
+                    notifier.showPhaseChangeNotification(
+                        "🍽️ 断食自动完成",
                         "设备重启 — 已自动进入进食窗口"
                     )
                 }
@@ -56,8 +56,8 @@ class BootReceiver : BroadcastReceiver() {
                 } else {
                     prefs.clearState()
                     val notifier = NotificationHelper(context)
-                    notifier.showAlertNotification(
-                        "进食窗口已关闭",
+                    notifier.showPhaseChangeNotification(
+                        "⏰ 进食窗口已关闭",
                         "设备重启 — 进食窗口已过期，可开始新断食"
                     )
                 }

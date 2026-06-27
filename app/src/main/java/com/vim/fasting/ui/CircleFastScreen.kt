@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vim.fasting.data.FactPhase
+import com.vim.fasting.data.FastingFact
 import com.vim.fasting.data.FastingPhase
 import com.vim.fasting.data.FastingState
 import kotlinx.coroutines.delay
@@ -75,8 +77,8 @@ fun CircleFastScreen(
 
     // Phase colors
     val phaseColor = when (state.phase) {
-        FastingPhase.FASTING -> Color(0xFF4CAF50)   // Green
-        FastingPhase.EATING -> Color(0xFFFF9800)     // Orange
+        FastingPhase.FASTING -> Color(0xFFFF5722)   // Orange-Red (燃脂橙)
+        FastingPhase.EATING -> Color(0xFF4CAF50)     // Green (进食翠绿)
         FastingPhase.IDLE -> Color(0xFF888888)       // Grey
     }
 
@@ -87,6 +89,14 @@ fun CircleFastScreen(
             FastingPhase.IDLE -> com.vim.fasting.R.string.idle
         }
     )
+
+    // Science fact for current elapsed time
+    val elapsedMinutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMs)
+    val currentFact = if (state.phase == FastingPhase.IDLE) null
+        else FastingFact.forElapsedMinutes(
+            minutes = elapsedMinutes,
+            phase = if (state.phase == FastingPhase.EATING) FactPhase.EATING else FactPhase.FASTING
+        )
 
     // Format remaining time
     val timeText = if (state.phase == FastingPhase.IDLE) {
@@ -161,6 +171,29 @@ fun CircleFastScreen(
                 color = phaseColor,
                 textAlign = TextAlign.Center
             )
+
+            // Science fact (only during fasting/eating)
+            if (currentFact != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "${currentFact.emoji} ${currentFact.title}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = phaseColor.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+
+                Text(
+                    text = currentFact.body,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFFAAAAAA),
+                    textAlign = TextAlign.Center,
+                    maxLines = 2
+                )
+            }
         }
     }
 }
