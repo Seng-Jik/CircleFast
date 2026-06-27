@@ -28,5 +28,7 @@ out/
 *.log
 *.hprof
 
-# Git
-# Keep the wrapper
+# Android Studio
+.navigation/
+captures/
+.externalNativeBuild/

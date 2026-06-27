@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CircleFast</string>
+    <string name="fasting_started">断食已开始 🟢</string>
+    <string name="fasting_ended">断食结束！进食窗口开启 🍽️</string>
+    <string name="eating_ended">进食窗口结束 🔴</string>
+    <string name="fasting_reminder">断食计时中…</string>
+    <string name="start_fasting">开始断食</string>
+    <string name="stop_fasting">结束断食</string>
+    <string name="fasting">断食中</string>
+    <string name="eating">进食中</string>
+    <string name="idle">准备中</string>
+    <string name="notification_channel_name">断食提醒</string>
+    <string name="notification_channel_desc">168间歇性断食计时通知</string>
+    <string name="hours_abbrev">h</string>
+    <string name="minutes_abbrev">m</string>
+    <string name="seconds_abbrev">s</string>
+</resources>
