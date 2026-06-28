@@ -50,13 +50,13 @@ fun CircleFastScreen(
     when (state.phase) {
         FastingPhase.FASTING -> {
             phaseLabel = "断食中"
-            countUpLabel = "已断食"
+            countUpLabel = "断食中"
             targetDuration = FastingState.FAST_DURATION_MS
             phaseColor = FastColor
         }
         FastingPhase.EATING -> {
             phaseLabel = "进食中"
-            countUpLabel = "已进食"
+            countUpLabel = "进食窗口"
             targetDuration = FastingState.EAT_DURATION_MS
             phaseColor = EatColor
         }
@@ -94,7 +94,7 @@ fun CircleFastScreen(
         val hours = TimeUnit.MILLISECONDS.toHours(elapsedMs)
         val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMs) % 60
         val seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedMs) % 60
-        String.format("%d:%02d:%02d", hours, minutes, seconds)
+        String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
     // Check if overtime
