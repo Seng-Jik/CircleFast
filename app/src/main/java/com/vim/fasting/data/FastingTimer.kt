@@ -9,6 +9,9 @@ import com.vim.fasting.receiver.FastingAlarmReceiver
 /**
  * Manages the 16:8 fasting timer using AlarmManager.
  * No foreground service — the timer is purely alarm-driven.
+ *
+ * Alarms fire when a phase exceeds its target duration,
+ * but the phase does NOT auto-switch — the notification only warns.
  */
 class FastingTimer(private val context: Context) {
 
@@ -16,34 +19,34 @@ class FastingTimer(private val context: Context) {
         context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
 
     /**
-     * Start a fasting phase. Schedules an alarm for when the 16h fast ends.
+     * Schedule an alarm that fires when 16h fasting target is exceeded.
      */
-    fun startFasting() {
+    fun scheduleFastingOverdue() {
         val endTime = System.currentTimeMillis() + FastingState.FAST_DURATION_MS
-        scheduleAlarm(ACTION_FASTING_ENDED, endTime)
+        scheduleAlarm(ACTION_FASTING_OVERDUE, endTime)
     }
 
     /**
-     * Start the eating phase. Schedules an alarm for when the 8h eating window ends.
+     * Schedule an alarm that fires when 8h eating target is exceeded.
      */
-    fun startEating() {
+    fun scheduleEatingOverdue() {
         val endTime = System.currentTimeMillis() + FastingState.EAT_DURATION_MS
-        scheduleAlarm(ACTION_EATING_ENDED, endTime)
+        scheduleAlarm(ACTION_EATING_OVERDUE, endTime)
     }
 
     /**
      * Cancel all pending alarms.
      */
     fun cancelAll() {
-        val pendingIntent = getPendingIntent(ACTION_FASTING_ENDED, PendingIntent.FLAG_NO_CREATE)
-        pendingIntent?.let { pi ->
-            alarmManager?.cancel(pi)
-            pi.cancel()
+        var pi = getPendingIntent(ACTION_FASTING_OVERDUE, PendingIntent.FLAG_NO_CREATE)
+        pi?.let {
+            alarmManager?.cancel(it)
+            it.cancel()
         }
-        val eatingIntent = getPendingIntent(ACTION_EATING_ENDED, PendingIntent.FLAG_NO_CREATE)
-        eatingIntent?.let { pi ->
-            alarmManager?.cancel(pi)
-            pi.cancel()
+        pi = getPendingIntent(ACTION_EATING_OVERDUE, PendingIntent.FLAG_NO_CREATE)
+        pi?.let {
+            alarmManager?.cancel(it)
+            it.cancel()
         }
     }
 
@@ -70,16 +73,16 @@ class FastingTimer(private val context: Context) {
 
     private fun requestCodeForAction(action: String): Int {
         return when (action) {
-            ACTION_FASTING_ENDED -> RC_FASTING_ENDED
-            ACTION_EATING_ENDED -> RC_EATING_ENDED
+            ACTION_FASTING_OVERDUE -> RC_FASTING_OVERDUE
+            ACTION_EATING_OVERDUE -> RC_EATING_OVERDUE
             else -> 0
         }
     }
 
     companion object {
-        const val ACTION_FASTING_ENDED = "com.vim.fasting.action.FASTING_ENDED"
-        const val ACTION_EATING_ENDED = "com.vim.fasting.action.EATING_ENDED"
-        private const val RC_FASTING_ENDED = 1001
-        private const val RC_EATING_ENDED = 1002
+        const val ACTION_FASTING_OVERDUE = "com.vim.fasting.action.FASTING_OVERDUE"
+        const val ACTION_EATING_OVERDUE = "com.vim.fasting.action.EATING_OVERDUE"
+        private const val RC_FASTING_OVERDUE = 1001
+        private const val RC_EATING_OVERDUE = 1002
     }
 }

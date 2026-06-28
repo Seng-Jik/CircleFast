@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.vim.fasting.data.FastingPhase
-import com.vim.fasting.data.FastingPreferences
 import com.vim.fasting.data.FastingState
 import com.vim.fasting.data.FastingTimer
 import com.vim.fasting.data.FactPhase
@@ -13,44 +12,39 @@ import com.vim.fasting.notification.NotificationHelper
 
 /**
  * Receives alarm intents from [FastingTimer].
- * Transitions the state and shows the appropriate notification.
  *
- * The receiver self-destroys after handling — no persistent service.
+ * Unlike the original design, alarms do NOT switch phases.
+ * They ONLY notify the user that the target duration has been exceeded.
+ * The user manually switches via tap.
  */
 class FastingAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
-        val prefs = FastingPreferences(context)
         val notifier = NotificationHelper(context)
-        val timer = FastingTimer(context)
 
         when (action) {
-            FastingTimer.ACTION_FASTING_ENDED -> {
-                // 16h fast finished → switch to eating window
-                val now = System.currentTimeMillis()
-                val newState = FastingState(FastingPhase.EATING, now)
-                prefs.saveState(newState)
-
-                // Schedule alarm for eating window end
-                timer.startEating()
-
-                // Show alert notification with science fact
-                val fact = FastingFact.forElapsedMinutes(FastingState.FAST_DURATION_MS / 60000, FactPhase.FASTING)
+            FastingTimer.ACTION_FASTING_OVERDUE -> {
+                // 16h target exceeded — notify but keep fasting
+                val fact = FastingFact.forElapsedMinutes(
+                    FastingState.FAST_DURATION_MS / 60000,
+                    FactPhase.FASTING
+                )
                 notifier.showPhaseChangeNotification(
-                    "${fact.emoji} ${context.getString(com.vim.fasting.R.string.fasting_ended)}",
-                    fact.body
+                    "⏰ 断食16小时目标达成！",
+                    "已断食满16小时，请考虑切换到进食窗口。\n${fact.emoji} ${fact.body}"
                 )
             }
 
-            FastingTimer.ACTION_EATING_ENDED -> {
-                // 8h eating window finished → back to idle or auto-start new fast
-                prefs.clearState()
-
-                val eatingFact = FastingFact.forElapsedMinutes(FastingState.EAT_DURATION_MS / 60000, FactPhase.EATING)
+            FastingTimer.ACTION_EATING_OVERDUE -> {
+                // 8h target exceeded — notify but keep eating
+                val fact = FastingFact.forElapsedMinutes(
+                    FastingState.EAT_DURATION_MS / 60000,
+                    FactPhase.EATING
+                )
                 notifier.showPhaseChangeNotification(
-                    "${eatingFact.emoji} ${context.getString(com.vim.fasting.R.string.eating_ended)}",
-                    eatingFact.body
+                    "⏰ 进食8小时目标达成！",
+                    "进食窗口已满8小时，请考虑切换到断食。\n${fact.emoji} ${fact.body}"
                 )
             }
         }

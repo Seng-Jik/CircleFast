@@ -13,9 +13,9 @@ class FastingPreferences(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun loadState(): FastingState {
-        val phaseOrdinal = prefs.getInt(KEY_PHASE, FastingPhase.IDLE.ordinal)
-        val phase = FastingPhase.entries.getOrElse(phaseOrdinal) { FastingPhase.IDLE }
-        val startTime = prefs.getLong(KEY_START_TIME, 0L)
+        val phaseOrdinal = prefs.getInt(KEY_PHASE, FastingPhase.EATING.ordinal)
+        val phase = FastingPhase.entries.getOrElse(phaseOrdinal) { FastingPhase.EATING }
+        val startTime = prefs.getLong(KEY_START_TIME, System.currentTimeMillis())
         return FastingState(phase, startTime)
     }
 
@@ -26,10 +26,14 @@ class FastingPreferences(context: Context) {
             .apply()
     }
 
-    fun clearState() {
+    /**
+     * Reset to default state: EATING with current time.
+     */
+    fun resetToDefault() {
+        val now = System.currentTimeMillis()
         prefs.edit()
-            .putInt(KEY_PHASE, FastingPhase.IDLE.ordinal)
-            .putLong(KEY_START_TIME, 0L)
+            .putInt(KEY_PHASE, FastingPhase.EATING.ordinal)
+            .putLong(KEY_START_TIME, now)
             .apply()
     }
 

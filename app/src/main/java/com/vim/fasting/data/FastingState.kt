@@ -3,12 +3,16 @@ package com.vim.fasting.data
 /**
  * Represents the current state of the 16:8 fasting timer.
  *
- * @param phase         Current phase of the cycle
+ * No "IDLE" state — the app always defaults to EATING.
+ * When a phase exceeds its duration, a notification is sent
+ * but timing continues (positive count-up).
+ *
+ * @param phase         Current phase: EATING or FASTING
  * @param startTimeMs   Wall-clock timestamp (System.currentTimeMillis()) when the current phase started
  */
 data class FastingState(
-    val phase: FastingPhase = FastingPhase.IDLE,
-    val startTimeMs: Long = 0L
+    val phase: FastingPhase = FastingPhase.EATING,
+    val startTimeMs: Long = System.currentTimeMillis()
 ) {
     companion object {
         /** 16 hours in milliseconds */
@@ -23,9 +27,6 @@ data class FastingState(
 }
 
 enum class FastingPhase {
-    /** No timer running */
-    IDLE,
-
     /** 16-hour fasting window active */
     FASTING,
 

@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -19,16 +18,13 @@ import com.vim.fasting.data.FastingState
 import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 
+private val FastColor = Color(0xFFFF5722)   // Orange-Red
+private val EatColor = Color(0xFF4CAF50)     // Green
+
 /**
  * Main screen composable for CircleFast.
  *
- * Layout (top to bottom on a round display):
- *   1. Phase label ("断食中" / "进食中" / "准备中")
- *   2. Circular countdown ring
- *   3. Remaining time text (H:MM:SS)
- *   4. No button — we use taps/swipes or separate controls
- *
- * The whole screen is one content block that fits on a round watch face.
+ * Optimized: phase strings resolved once per phase change, minimal allocations.
  */
 @Composable
 fun CircleFastScreen(
@@ -45,26 +41,33 @@ fun CircleFastScreen(
         }
     }
 
-    val ctx = LocalContext.current
+    // Resolve phase-dependent values once per phase change
+    val phaseLabel: String
+    val countUpLabel: String
+    val targetDuration: Long
+    val phaseColor: Color
 
-    // Compute elapsed and progress
-    val elapsedMs = currentTimeMs - state.startTimeMs
-    val (totalDuration, remainingMs) = when (state.phase) {
+    when (state.phase) {
         FastingPhase.FASTING -> {
-            val remaining = (FastingState.FAST_DURATION_MS - elapsedMs).coerceAtLeast(0L)
-            FastingState.FAST_DURATION_MS to remaining
+            phaseLabel = "断食中"
+            countUpLabel = "已断食"
+            targetDuration = FastingState.FAST_DURATION_MS
+            phaseColor = FastColor
         }
         FastingPhase.EATING -> {
-            val remaining = (FastingState.EAT_DURATION_MS - elapsedMs).coerceAtLeast(0L)
-            FastingState.EAT_DURATION_MS to remaining
-        }
-        FastingPhase.IDLE -> {
-            0L to 0L
+            phaseLabel = "进食中"
+            countUpLabel = "已进食"
+            targetDuration = FastingState.EAT_DURATION_MS
+            phaseColor = EatColor
         }
     }
 
-    val rawProgress = if (totalDuration > 0L) {
-        1f - (remainingMs.toFloat() / totalDuration.toFloat())
+    // Compute elapsed (always positive count-up)
+    val elapsedMs = currentTimeMs - state.startTimeMs
+
+    // Progress: capped at 1.0f once target duration is reached
+    val rawProgress = if (targetDuration > 0L) {
+        (elapsedMs.toFloat() / targetDuration.toFloat()).coerceAtMost(1f)
     } else {
         0f
     }
@@ -75,51 +78,32 @@ fun CircleFastScreen(
         label = "arcProgress"
     )
 
-    // Phase colors
-    val phaseColor = when (state.phase) {
-        FastingPhase.FASTING -> Color(0xFFFF5722)   // Orange-Red (燃脂橙)
-        FastingPhase.EATING -> Color(0xFF4CAF50)     // Green (进食翠绿)
-        FastingPhase.IDLE -> Color(0xFF888888)       // Grey
-    }
-
-    val phaseLabel = ctx.getString(
-        when (state.phase) {
-            FastingPhase.FASTING -> com.vim.fasting.R.string.fasting
-            FastingPhase.EATING -> com.vim.fasting.R.string.eating
-            FastingPhase.IDLE -> com.vim.fasting.R.string.idle
-        }
-    )
-
     // Science fact for current elapsed time
     val elapsedMinutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMs)
-    val currentFact = if (state.phase == FastingPhase.IDLE) null
-        else FastingFact.forElapsedMinutes(
+    val currentFact = remember(elapsedMinutes, state.phase) {
+        FastingFact.forElapsedMinutes(
             minutes = elapsedMinutes,
             phase = if (state.phase == FastingPhase.EATING) FactPhase.EATING else FactPhase.FASTING
         )
+    }
 
-    // Format remaining time
-    val timeText = if (state.phase == FastingPhase.IDLE) {
-        "--:--:--"
+    // Format elapsed time (HH:MM:SS, positive count-up)
+    val timeText = if (elapsedMs < 0) {
+        "00:00:00"
     } else {
-        val hours = TimeUnit.MILLISECONDS.toHours(remainingMs)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(remainingMs) % 60
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(remainingMs) % 60
+        val hours = TimeUnit.MILLISECONDS.toHours(elapsedMs)
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMs) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedMs) % 60
         String.format("%d:%02d:%02d", hours, minutes, seconds)
     }
 
-    // Format countdown label
-    val countdownLabel = when (state.phase) {
-        FastingPhase.FASTING -> "剩余断食"
-        FastingPhase.EATING -> "剩余进食"
-        FastingPhase.IDLE -> "16:8 断食"
-    }
+    // Check if overtime
+    val isOvertime = elapsedMs >= targetDuration
 
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // All content stacked in center using Column
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -129,26 +113,16 @@ fun CircleFastScreen(
         ) {
             // Phase label at top
             Text(
-                text = timeText,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
+                text = phaseLabel,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
                 color = phaseColor,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = countdownLabel,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color(0xFFAAAAAA),
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Circular countdown container — centered, takes ~60% of screen
+            // Circular ring container
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
@@ -161,39 +135,67 @@ fun CircleFastScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Phase label
+            // Elapsed time (prominent)
             Text(
-                text = phaseLabel,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                text = timeText,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
                 color = phaseColor,
                 textAlign = TextAlign.Center
             )
 
-            // Science fact (only during fasting/eating)
-            if (currentFact != null) {
+            Text(
+                text = countUpLabel,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFFAAAAAA),
+                textAlign = TextAlign.Center
+            )
+
+            // Overtime badge
+            if (isOvertime) {
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = "${currentFact.emoji} ${currentFact.title}",
-                    fontSize = 11.sp,
+                    text = "⚠️ 已超时",
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = phaseColor.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1
-                )
-
-                Text(
-                    text = currentFact.body,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFFAAAAAA),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2
+                    color = Color(0xFFFFD700),
+                    textAlign = TextAlign.Center
                 )
             }
+
+            // Science fact
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "${currentFact.emoji} ${currentFact.title}",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = phaseColor.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+
+            Text(
+                text = currentFact.body,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFFAAAAAA),
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+
+            // Tap hint
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "点击切换",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0x55FFFFFF),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -39,7 +39,6 @@ fun CircularCountdown(
     val arcColor = when (phase) {
         FastingPhase.FASTING -> FastingArc
         FastingPhase.EATING -> EatingArc
-        FastingPhase.IDLE -> ArcTrack
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
@@ -93,8 +92,7 @@ fun CircularCountdown(
         }
 
         // ---------- Progress arc ----------
-        if (phase != FastingPhase.IDLE) {
-            val sweep = 360f * progress.coerceIn(0f, 1f)
+        val sweep = 360f * progress.coerceIn(0f, 1f)
             drawArc(
                 color = arcColor,
                 startAngle = 270f,
@@ -104,7 +102,6 @@ fun CircularCountdown(
                 size = arcSize,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
-        }
 
         // ---------- Center dot ----------
         drawCircle(

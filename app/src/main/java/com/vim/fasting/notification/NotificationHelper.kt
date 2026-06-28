@@ -14,20 +14,22 @@ import com.vim.fasting.MainActivity
 import com.vim.fasting.R
 
 /**
- * Sends notification only on phase transitions (fasting started, fasting ended, eating ended).
- * No ongoing/progress notifications. New notification replaces the previous one (same ID).
- * Tapping the notification opens the app — no side effects.
+ * Sends notification only on phase transitions.
+ *
+ * Optimized for startup: notification channel is created lazily on first use,
+ * not in constructor, so Activity.onCreate isn't blocked by I/O.
  */
 class NotificationHelper(private val context: Context) {
 
     private val notificationManager: NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    init {
-        createChannel()
-    }
+    // Channel created lazily on first notification, not in constructor
+    private var channelCreated = false
 
-    private fun createChannel() {
+    private fun ensureChannel() {
+        if (channelCreated) return
+        channelCreated = true
         val channel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.notification_channel_name),
@@ -42,11 +44,11 @@ class NotificationHelper(private val context: Context) {
 
     /**
      * Show a one-shot notification for phase transitions.
-     * Always uses the same notification ID so new messages overwrite old ones.
-     * Tapping opens the app.
+     * Creates notification channel on first call if needed.
      */
     fun showPhaseChangeNotification(title: String, body: String) {
         vibrate()
+        ensureChannel()
 
         val tapIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -66,12 +68,11 @@ class NotificationHelper(private val context: Context) {
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
-        // Same NOTIFICATION_ID every time → new notifications overwrite old ones
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     /**
-     * Cancel any notification shown (e.g. when user stops fasting).
+     * Cancel any notification shown.
      */
     fun cancelNotification() {
         notificationManager.cancel(NOTIFICATION_ID)

@@ -9,7 +9,6 @@
     <string name="stop_fasting">结束断食</string>
     <string name="fasting">断食中</string>
     <string name="eating">进食中</string>
-    <string name="idle">准备中</string>
     <string name="notification_channel_name">断食提醒</string>
     <string name="notification_channel_desc">168间歇性断食计时通知</string>
     <string name="hours_abbrev">h</string>
