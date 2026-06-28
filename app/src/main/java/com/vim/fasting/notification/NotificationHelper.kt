@@ -6,9 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+
 import androidx.core.app.NotificationCompat
 import com.vim.fasting.MainActivity
 import com.vim.fasting.R
@@ -47,7 +45,6 @@ class NotificationHelper(private val context: Context) {
      * Creates notification channel on first call if needed.
      */
     fun showPhaseChangeNotification(title: String, body: String) {
-        vibrate()
         ensureChannel()
 
         val tapIntent = Intent(context, MainActivity::class.java).apply {
@@ -76,18 +73,6 @@ class NotificationHelper(private val context: Context) {
      */
     fun cancelNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
-    }
-
-    private fun vibrate() {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-        val effect = VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE)
-        vibrator.vibrate(effect)
     }
 
     companion object {
