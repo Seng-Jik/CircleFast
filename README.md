@@ -22,6 +22,13 @@
 - 🔄 设备重启自动恢复计时
 - ⚡ 冷启动 < 500ms，APK < 1MB
 
+## 截图
+
+<p align="center">
+  <img src="screenshot_1.jpg" width="240" alt="截图1">
+  <img src="screenshot_2.jpg" width="240" alt="截图2">
+</p>
+
 ## 安装
 
 ### 手表开启 ADB
